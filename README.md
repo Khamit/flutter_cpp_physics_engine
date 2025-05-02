@@ -81,12 +81,5 @@ import 'dart:ffi';
 final dylib = DynamicLibrary.open('libgame_engine.so'); // Adjust per platform
 ```
 
-
 📜 License
 This project is licensed under the MIT License. See the LICENSE file for details.
-
-vbnet
-```
-Would you like me to write a sample Dart FFI binding to this C++ engine (e.g., `lib/ffi_bindings.dart`)?
-```
----
