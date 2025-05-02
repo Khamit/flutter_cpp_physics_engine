@@ -80,13 +80,13 @@ import 'dart:ffi';
 final dylib = DynamicLibrary.open('libgame_engine.so'); // Adjust per platform
 ```
 ---
-## Flutter steps
-# Step 1: Structure your Flutter project to include native C++
+# Flutter steps
+## Step 1: Structure your Flutter project to include native C++
 Create your Flutter project (if not already done):
 ```
 flutter create my_flutter_game
 ```
-# 2.Enable Android NDK support:
+## 2.Enable Android NDK support:
 Open android/app/build.gradle and add:
 ```
 android {
@@ -110,7 +110,7 @@ android {
     }
 }
 ```
-# Step 2: Add C++ engine
+## Step 2: Add C++ engine
  Create a folder: android/app/src/main/cpp/
  Add your game_engine.cpp file there.
  Add a header file if needed (game_engine.h).
@@ -128,7 +128,7 @@ target_link_libraries(game_engine
     ${log-lib}
 )
 ```
-# Step 3: Create JNI Bridge
+## Step 3: Create JNI Bridge
 Create a file in android/app/src/main/cpp/bridge.cpp:
 ```
 #include <jni.h>
@@ -164,7 +164,7 @@ Java_com_example_myfluttergame_GameEngine_destroyBody(JNIEnv *env, jobject, jlon
 }
 
 ```
-# Step 4: Java/Kotlin wrapper
+## Step 4: Java/Kotlin wrapper
 Create GameEngine.java in android/app/src/main/java/com/example/myfluttergame/:
 ```
 package com.example.myfluttergame;
@@ -181,7 +181,7 @@ public class GameEngine {
 }
 
 ```
-# Step 5: Use in Dart (Flutter)
+## Step 5: Use in Dart (Flutter)
 Use Platform Channels to talk from Dart to Java:
 ```
 import 'package:flutter/services.dart';
@@ -198,7 +198,7 @@ class PhysicsController {
 }
 
 ```
-# In MainActivity.kt:
+## In MainActivity.kt:
 ```
 class MainActivity: FlutterActivity() {
     private val engine = GameEngine()
