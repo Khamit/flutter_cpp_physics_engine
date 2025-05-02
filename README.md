@@ -15,18 +15,17 @@ A lightweight and efficient 2D physics engine written in C++, designed for integ
 
 ## 📁 Folder Structure
 
-```flutter_cpp_physics_engine/
+```
+flutter_cpp_physics_engine/
 ├── src/ # C++ source code
 ├── include/ # C++ headers (optional)
 ├── flutter_example/ # Flutter project using this engine via FFI
 ├── .gitignore
 ├── CMakeLists.txt
 ├── LICENSE
-└── README.md```
+└── README.md
+```
 ---
-
-yaml
-
 
 ## 📦 Installation
 
@@ -60,7 +59,7 @@ libgame_engine.dylib (macOS)
 
 ---
 
-🔗 Flutter FFI Integration (Basic)
+## 🔗 Flutter FFI Integration (Basic)
 In your Flutter app:
 
 1. Add ffi to pubspec.yaml
@@ -81,5 +80,5 @@ import 'dart:ffi';
 final dylib = DynamicLibrary.open('libgame_engine.so'); // Adjust per platform
 ```
 
-📜 License
+## 📜 License
 This project is licensed under the MIT License. See the LICENSE file for details.
