@@ -1,5 +1,5 @@
 import 'package:gigatap/engine/core/ffi_engine.dart';
-
+// im not sure about this code...why i check here...maybe better do all inside cpp files? ... nah that is for demo.
 class GameRules {
   /// Check if two tiles are adjacent (only 1 cell apart)
   static bool isAdjacent(int r1, int c1, int r2, int c2) {
