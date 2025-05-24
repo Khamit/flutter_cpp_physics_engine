@@ -1,32 +1,24 @@
-cmake_minimum_required(VERSION 3.10)
-project(flutter_cpp_physics_engine)
+cmake_minimum_required(VERSION 3.4.1)
+project(game_engine)
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Paths
+set(SRC_DIR src)
+set(INCLUDE_DIR ${SRC_DIR}/include)
 
-# Output directory for the shared library
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-
-# Include header files
-include_directories(include)
-
-# Create shared library
+# Source files
 add_library(game_engine SHARED
-    src/game_engine.cpp
+    ${SRC_DIR}/game_engine.cpp
+    ${SRC_DIR}/BoardManager.cpp
+    ${SRC_DIR}/PhysicsBody.cpp
+    ${SRC_DIR}/PhysicsWorld.cpp
+    ${SRC_DIR}/Vector2.cpp
+    ${SRC_DIR}/jewel.cpp
+    ${SRC_DIR}/InitialBoardGenerator.cpp
 )
 
-# Optional: Rename output file depending on OS
-if(WIN32)
-    set_target_properties(game_engine PROPERTIES OUTPUT_NAME "game_engine")
-elseif(APPLE)
-    set_target_properties(game_engine PROPERTIES SUFFIX ".dylib")
-else()
-    set_target_properties(game_engine PROPERTIES SUFFIX ".so")
-endif()
+# Include headers
+target_include_directories(game_engine PRIVATE ${INCLUDE_DIR})
 
-# next step is
-# mkdir build
-# cd build
-# cmake ..
-# cmake --build .
+# Link Android log library
+find_library(log-lib log)
+target_link_libraries(game_engine ${log-lib})

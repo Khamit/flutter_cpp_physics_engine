@@ -1,77 +1,130 @@
-#include <cmath>
-#include "game_engine.h" // optional
+#include "Jewel.h"
 
-struct Vector2 {
-    float x, y;
+#include <jni.h>    // - after add into you android folder
+#include "BoardManager.h"
+#include "PhysicsWorld.h"
+#include "game_engine.h"
 
-    Vector2(float x = 0.0f, float y = 0.0f) : x(x), y(y) {}
+#include <ctime>
+#include <cstdlib>
 
-    void add(const Vector2& v) {
-        x += v.x;
-        y += v.y;
-    }
+#include <android/log.h>    // - after add into you android folder
+#define LOG_TAG "JewelDebug"
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 
-    void scale(float scalar) {
-        x *= scalar;
-        y *= scalar;
-    }
 
-    Vector2 scaled(float scalar) const {
-        return Vector2(x * scalar, y * scalar);
-    }
+// Global instances
+static PhysicsWorld g_world(0.0f, -9.8f);
+static BoardManager* g_board = nullptr;
 
-    void set(float newX, float newY) {
-        x = newX;
-        y = newY;
-    }
-};
-
-struct PhysicsBody {
-    Vector2 position;
-    Vector2 velocity;
-    Vector2 gravity;
-    float mass;
-
-    PhysicsBody(float posX, float posY, float velX, float velY, float gravX = 0.0f, float gravY = 9.8f, float m = 1.0f)
-        : position(posX, posY), velocity(velX, velY), gravity(gravX, gravY), mass(m) {}
-
-    void update(float dt) {
-        // Apply gravity to velocity
-        Vector2 gravityEffect = gravity.scaled(dt);
-        velocity.add(gravityEffect);
-
-        // Apply velocity to position
-        Vector2 displacement = velocity.scaled(dt);
-        position.add(displacement);
-    }
-};
+// Thread-safe random generator
+static std::mt19937& getRandomGenerator() {
+    static thread_local std::mt19937 generator(std::random_device{}());
+    return generator;
+}
 
 extern "C" {
 
-// Create a physics body with position, velocity, gravity, and mass
-PhysicsBody* create_body(float posX, float posY, float velX, float velY, float gravX, float gravY, float mass) {
-    return new PhysicsBody(posX, posY, velX, velY, gravX, gravY, mass);
-}
+    __attribute__((visibility("default")))
+    void destroy_board() {
+        if (g_board) {
+            LOGI("destroy_board: deleting existing board instance");
+            delete g_board;
+            g_board = nullptr;
+        } else {
+            LOGI("destroy_board: no board instance to delete");
+        }
+    }
 
-void update_body(PhysicsBody* body, float dt) {
-    body->update(dt);
-}
+    __attribute__((visibility("default")))
+    void init_board(int rows, int cols, float cellSize, int colorCount, int shapeCount) {
+        destroy_board();
+        g_board = new BoardManager(rows, cols, cellSize, g_world, shapeCount, colorCount);
+    }
 
-void get_body_position(PhysicsBody* body, float* x, float* y) {
-    *x = body->position.x;
-    *y = body->position.y;
-}
+    // Get the color of the jewel at a specific grid cell
+    __attribute__((visibility("default")))
+    int get_jewel_color_at(int row, int col) {
+        if (!g_board) {
+            LOGI("get_jewel_color_at: Board is null");
+            return -1;
+        }
+        Jewel* jewel = g_board->getJewel(row, col);
+        return jewel ? static_cast<int>(jewel->getData().color) : -1;
+    }
 
-void set_body_velocity(PhysicsBody* body, float vx, float vy) {
-    body->velocity.set(vx, vy);
-}
+    __attribute__((visibility("default")))
+    JewelDataFFI get_jewel_data_ffi(int row, int col) {
+        JewelDataFFI data = {0, 0, 0, 0, 1.0f, 0, 0, 0};
 
-void set_body_gravity(PhysicsBody* body, float gx, float gy) {
-    body->gravity.set(gx, gy);
-}
+        if (!g_board) return data;
 
-void destroy_body(PhysicsBody* body) {
-    delete body;
-}
+        Jewel* jewel = g_board->getJewel(row, col);
+        if (!jewel) return data;
 
+        const JewelData& internalData = jewel->getData();
+
+        data.posX = internalData.position.x;
+        data.posY = internalData.position.y;
+        data.velX = internalData.velocity.x;
+        data.velY = internalData.velocity.y;
+        data.mass = internalData.mass;
+        data.shape = static_cast<int>(internalData.shape);
+        data.color = static_cast<int>(internalData.color);
+        data.isMatched = internalData.isMatched ? 1 : 0;
+
+        return data;
+    }
+
+    // Swap two jewels and check for matches
+    __attribute__((visibility("default")))
+    int swap_and_match(int row1, int col1, int row2, int col2) {
+        if (!g_board) return 0;
+
+        g_board->swapJewels(row1, col1, row2, col2);
+        int score = g_board->checkAndClearMatches();
+
+        if (score > 0) {
+            g_board->refillBoard();
+            g_board->resolveMatches();  // Chain reaction
+        } else {
+            g_board->swapJewels(row1, col1, row2, col2); // Undo
+        }
+
+        return score;
+    }
+
+    // Match-only step for game loop
+    __attribute__((visibility("default")))
+    int match_only() {
+        if (!g_board) return 0;
+        int score = g_board->checkAndClearMatches();
+        if (score > 0) {
+            g_board->refillBoard();
+        }
+        return score;
+    }
+
+    // Stub for physics
+    __attribute__((visibility("default")))
+    int ffi_create_body(float posX, float posY, float velX, float velY, float mass);
+
+    // Match-check step
+    __attribute__((visibility("default")))
+    int check_and_clear_matches() {
+        if (!g_board) return 0;
+        return g_board->checkAndClearMatches();
+    }
+
+    // Refill board
+    __attribute__((visibility("default")))
+    void refill_board() {
+        if (g_board) g_board->refillBoard();
+    }
+    // has valid move
+    __attribute__((visibility("default")))
+    int has_valid_move() {
+        if (!g_board) return 0;
+        return g_board->hasValidMove() ? 1 : 0;
+    }
 }
